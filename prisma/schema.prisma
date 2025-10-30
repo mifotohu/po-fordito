@@ -1,0 +1,50 @@
+
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+    binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
+    output = "/home/ubuntu/po_file_translator/nextjs_space/node_modules/.prisma/client"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model TranslationProject {
+  id                String   @id @default(uuid())
+  fileName          String
+  originalFileName  String
+  sourceLang        String
+  targetLang        String   @default("hu")
+  status           String   // "uploading", "parsing", "translating", "completed", "error"
+  totalEntries     Int      @default(0)
+  translatedEntries Int     @default(0)
+  errorMessage     String?
+  cloudStoragePath String?
+  translatedFilePath String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  entries TranslationEntry[]
+}
+
+model TranslationEntry {
+  id           String  @id @default(uuid())
+  projectId    String
+  lineNumber   Int
+  msgid        String  @db.Text
+  msgstr       String? @db.Text
+  translatedMsgstr String? @db.Text
+  comment      String? @db.Text
+  isTranslated Boolean @default(false)
+  hasError     Boolean @default(false)
+  errorMessage String?
+  characterCount Int   @default(0)
+  
+  project TranslationProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  @@index([projectId])
+}
